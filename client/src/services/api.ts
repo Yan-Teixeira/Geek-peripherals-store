@@ -1,5 +1,5 @@
 import { request } from './http'
-import type { CartItem, Dashboard, Order, Product, ProductInput, User } from '../types'
+import type { CartItem, CheckoutDetails, Dashboard, Order, Product, ProductInput, User } from '../types'
 
 // Não faz fallback silencioso: falhas de backend continuam visíveis no modo API.
 export const isDemo = import.meta.env.VITE_DEMO_MODE !== 'false'
@@ -13,7 +13,7 @@ export const api = {
   logout: async (): Promise<void> => demoModule ? (await demoModule).logout() : request('/auth/logout', { method: 'POST' }),
   saveProduct: async (data: ProductInput, id?: string): Promise<Product> => demoModule ? (await demoModule).saveProduct(data, id) : request(id ? `/products/${encodeURIComponent(id)}` : '/products', { method: id ? 'PATCH' : 'POST', body: body(data) }),
   deleteProduct: async (id: string): Promise<void> => demoModule ? (await demoModule).deleteProduct(id) : request(`/products/${encodeURIComponent(id)}`, { method: 'DELETE' }),
-  createOrder: async (items: CartItem[]): Promise<Order> => demoModule ? (await demoModule).createOrder(items) : request('/orders', { method: 'POST', body: body({ items }) }),
+  createOrder: async (items: CartItem[], checkout: CheckoutDetails): Promise<Order> => demoModule ? (await demoModule).createOrder(items, checkout) : request('/orders', { method: 'POST', body: body({ items, ...checkout }) }),
   orders: async (): Promise<Order[]> => demoModule ? (await demoModule).orders() : request('/orders'),
   dashboard: async (): Promise<Dashboard> => demoModule ? (await demoModule).dashboard() : request('/dashboard'),
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { categories, normalizeSearch } from '../catalog'
 import { useCatalog } from '../contexts/CatalogContext'
 import { api } from '../services/api'
 import type { Dashboard, Product, ProductInput } from '../types'
@@ -16,7 +17,7 @@ export function AdminPage() {
   const [deleting, setDeleting] = useState<Product | null>(null)
   const [busy, setBusy] = useState(false)
   useEffect(() => { let active = true; api.dashboard().then(data => { if (active) setDashboard(data) }).catch(error => { if (active) setError(errorMessage(error)) }); return () => { active = false } }, [products])
-  const visible = products.filter(p => `${p.name} ${p.category}`.toLowerCase().includes(query.toLowerCase()))
+  const visible = products.filter(p => normalizeSearch(`${p.name} ${p.category}`).includes(normalizeSearch(query)))
   async function save(data: ProductInput, id?: string) {
     await api.saveProduct(data, id)
     setEditing(null); await refresh()
@@ -55,7 +56,7 @@ function ProductForm({ product, onSave, onCancel }: { product?: Product; onSave:
   }
   return <section className="form-panel product-form" aria-label={product ? 'Editar produto' : 'Novo produto'}><h2>{product ? 'EDITAR PRODUTO' : 'NOVO PRODUTO'}</h2>{error && <ErrorNotice message={error}/>}<form className="fields" onSubmit={submit}>
     <label>Nome<input name="name" required maxLength={150} defaultValue={product?.name}/></label>
-    <label>Categoria<select name="category" defaultValue={product?.category || 'Teclados'}>{['Teclados', 'PCs montados', 'Placas de vídeo', 'Componentes'].map(category => <option key={category}>{category}</option>)}</select></label>
+    <label>Categoria<select name="category" defaultValue={product?.category || 'Teclados'}>{categories.map(category => <option key={category}>{category}</option>)}</select></label>
     <label>Descrição<textarea name="description" required maxLength={2000} defaultValue={product?.description}/></label>
     <div className="form-columns"><label>Preço (R$)<input name="price" type="number" min="0.01" step="0.01" max="1000000" required defaultValue={product ? product.priceInCents / 100 : ''}/></label><label>Estoque<input name="stock" type="number" min="0" step="1" max="999999" required defaultValue={product?.stock ?? 0}/></label></div>
     <label>Selo do produto<input name="badge" maxLength={40} defaultValue={product?.badge}/></label>

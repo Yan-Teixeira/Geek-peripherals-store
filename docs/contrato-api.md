@@ -35,3 +35,9 @@ Pedido: `{ id, userId, items, totalInCents, status, createdAt }`. Cada item refe
 Erros propostos: `{ message, fieldErrors? }`. Usar 400 para entrada inválida, 401 para ausência/expiração da autenticação, 403 para acesso negado, 404 para recurso ausente e 409 para conflitos como e-mail duplicado.
 
 Definir com a dupla o mecanismo de sessão antes da implementação; preferir cookie HttpOnly com configuração de CORS/credenciais adequada. Se usar token, documentar armazenamento, expiração e logout. Proteger operações com cookie contra CSRF. Nunca confiar em role informado pelo navegador para conceder privilégios.
+
+## Pagamentos e checkout
+
+O checkout do frontend inclui Pix, crédito, débito e boleto em **modo demonstrativo**. O QR temporário exibido nessa configuração contém um payload identificador da demonstração, não uma cobrança Pix. Na integração real, o backend deverá criar a cobrança com um provedor de pagamentos e devolver os dados seguros que a interface precisa exibir (por exemplo, QR e código Pix copia e cola, vencimento ou token de sessão do cartão). O backend deve validar o estado por webhook do provedor antes de marcar o pedido como pago.
+
+Nunca envie nem persista número completo do cartão, CVV ou validade no banco MongoDB, nos pedidos, logs ou endpoints próprios. Para cartão, use os campos/tokenização hospedados pelo provedor e envie ao backend somente o token seguro. O servidor calcula o total com os preços atuais do catálogo e confirma estoque; valores do cliente servem apenas para apresentação.

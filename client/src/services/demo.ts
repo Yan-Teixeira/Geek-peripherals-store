@@ -1,5 +1,6 @@
 import { seedProducts } from '../data/products'
-import type { CartItem, Dashboard, Order, Product, ProductInput, User } from '../types'
+import type { CartItem, CheckoutDetails, Dashboard, Order, Product, ProductInput, User } from '../types'
+import { validateCheckout } from '../checkout'
 import { ApiError } from './http'
 
 // Somente demonstração local. Não representa autenticação ou autorização seguras.
@@ -43,8 +44,10 @@ export const demo = {
     return structuredClone(product)
   },
   async deleteProduct(id: string) { await delay(); requireAdmin(); products = products.filter(p => p.id !== id) },
-  async createOrder(items: CartItem[]) {
+  async createOrder(items: CartItem[], checkout: CheckoutDetails) {
     await delay(); const user = requireUser()
+    const validation = validateCheckout(checkout)
+    if (validation) throw new Error(validation)
     if (!items.length) throw new Error('O carrinho está vazio.')
     let totalInCents = 0
     for (const item of items) {
@@ -53,7 +56,7 @@ export const demo = {
       totalInCents += product.priceInCents * item.quantity
     }
     for (const item of items) products.find(p => p.id === item.productId)!.stock -= item.quantity
-    const order: Order = { id: crypto.randomUUID(), userId: user.id, items: structuredClone(items), totalInCents, status: 'Recebido', createdAt: new Date().toISOString() }
+    const order: Order = { id: crypto.randomUUID(), userId: user.id, items: structuredClone(items), totalInCents, status: 'Aguardando pagamento (simulado)', createdAt: new Date().toISOString(), checkout: structuredClone(checkout) }
     orders.push(order); return structuredClone(order)
   },
   async orders() { await delay(); const user = requireUser(); return structuredClone(orders.filter(o => o.userId === user.id)) },

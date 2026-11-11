@@ -8,9 +8,11 @@ export function Header({ cartCount, onCart, query, onSearch }: { cartCount: numb
     <NavLink to="/" className="brand" aria-label="Ir para o início"><span className="brand__mark"><Icon name="spark" size={18}/></span><span>NEXUS<span>//</span>LAB</span></NavLink>
     <nav className="main-nav" aria-label="Navegação principal">
       <NavLink to="/" end>Loja</NavLink>
+      <NavLink to="/catalogo">Catálogo</NavLink>
+      <NavLink to="/sobre">Sobre</NavLink>
       {user?.role === 'admin' && <NavLink to="/admin">Painel admin</NavLink>}
     </nav>
-    <form className="search" role="search" onSubmit={event => { event.preventDefault(); navigate('/'); setTimeout(() => document.getElementById('products')?.scrollIntoView(), 0) }}>
+    <form className="search" role="search" onSubmit={event => { event.preventDefault(); navigate('/catalogo'); setTimeout(() => document.getElementById('products')?.scrollIntoView(), 0) }}>
       <Icon name="search" size={18}/><input value={query} onChange={event => onSearch(event.target.value)} placeholder="Buscar produto, marca ou categoria..." aria-label="Buscar produtos"/>
       <button className="search-submit" type="submit" aria-label="Pesquisar produtos"><Icon name="arrow" size={16}/></button>
     </form>

@@ -4,7 +4,7 @@ Projeto acadêmico de Arquitetura Web: um e-commerce geek especializado em perif
 
 ## Status
 
-Repositório em preparação. A implementação começa pelo frontend. O código do Figma Make ainda precisa ser exportado/importado; frontend e backend **ainda não estão implementados nem executáveis**.
+O frontend React está implementado com catálogo, vitrine, autenticação, carrinho, checkout demonstrativo e painel administrativo. A API Express/MongoDB será integrada pela camada de serviços quando o backend estiver disponível. Os pagamentos atuais são simulações: não cobram, não emitem Pix/boleto bancário e não enviam os dados de cartão.
 
 ## Design
 
@@ -19,8 +19,8 @@ Repositório em preparação. A implementação começa pelo frontend. O código
 ## Estrutura
 
 ```text
-client/                 # Frontend React (pendente)
-server/                 # Backend API MVC (pendente)
+client/                 # Frontend React + camada de serviços HTTP
+server/                 # Backend API MVC
 docs/
   requisitos.md         # Checklist da entrega
   contrato-api.md       # Proposta para integração entre a dupla
@@ -39,23 +39,21 @@ docs/
 
 ## Execução local
 
-Ainda não há `package.json` ou aplicação executável. Os comandos abaixo são a **convenção planejada**, a validar depois da implementação:
-
 ```bash
-# Terminal 1 — após implementar o backend
+# Terminal 1 — backend
 cd server
 npm install
-# Copie .env.example para .env e preencha os valores.
+# Copie .env.example para .env e configure MongoDB e sessão.
 npm start
 
-# Terminal 2 — após implementar o frontend
+# Terminal 2 — frontend
 cd client
 npm install
-# Copie .env.example para .env.
-npm start
+# Copie .env.example para .env. O VITE_API_URL aponta para a API.
+npm run dev
 ```
 
-As variáveis previstas estão nos arquivos `.env.example` de cada pasta. Elas são uma proposta de integração e deverão corresponder ao código implementado. Nunca publique arquivos `.env` ou credenciais reais.
+Com `VITE_DEMO_MODE=true`, o frontend usa dados locais de demonstração. Para apontá-lo ao backend, use `VITE_DEMO_MODE=false` e configure `VITE_API_URL` (por padrão `http://localhost:3000/api`). O contrato inicial está em [docs/contrato-api.md](docs/contrato-api.md). Valores monetários trafegam em centavos inteiros. Nunca publique arquivos `.env` ou credenciais reais.
 
 ## Entrega acadêmica
 
