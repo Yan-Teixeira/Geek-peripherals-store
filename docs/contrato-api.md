@@ -1,6 +1,6 @@
 # Proposta de contrato de API
 
-Este contrato é uma proposta para alinhar a dupla. Nenhuma rota está implementada ou validada ainda.
+Este contrato descreve a API implementada em `server/src`. A sessão usa cookie JWT HttpOnly com validade de 7 dias; chamadas do navegador devem incluir credenciais (o frontend já faz isso). Configure `CLIENT_ORIGIN` com a origem exata do frontend.
 
 Base local proposta: `http://localhost:3000/api`. Dados em JSON. Valores monetários em centavos inteiros, quantidades inteiras positivas. IDs gerados pelo servidor.
 
@@ -23,15 +23,21 @@ Base local proposta: `http://localhost:3000/api`. Dados em JSON. Valores monetá
 | GET | /orders | Listar pedidos próprios; admin pode listar todos | Autenticado |
 | GET | /orders/:id | Detalhes de pedido | Dono ou admin |
 | GET | /dashboard | Totais de vendas | Admin |
+| PATCH | /orders/:id | Atualizar status do pedido | Admin |
+| DELETE | /orders/:id | Excluir pedido | Admin |
+
+`GET /products` aceita `q` para busca textual e `category` para filtrar. Administrador autenticado também recebe produtos inativos. `GET /orders?all=true` lista todos somente para administrador; cliente recebe sempre os próprios.
 
 Cadastro via /auth/register completa a operação de criação de usuários. Definir política de exclusão preservando histórico de pedidos e referências. Produtos desativados podem preservar o histórico sem aceitar novas compras.
 
 Usuário: `{ id, name, email, role }`, com role `admin` ou `user`. Nunca retornar hash de senha.
 
-Produto: `{ id, name, description, category, priceInCents, stock, images }`.
+Produto exposto pela API: `{ id, name, description, category, priceInCents, stock, images }`. Internamente, o produto referencia uma categoria por `categoryId`; ao cadastrar pelo painel, a API localiza ou cria a categoria pelo nome. O documento MongoDB armazena valores monetários em centavos inteiros.
 
-Pedido: `{ id, userId, items, totalInCents, status, createdAt }`. Cada item referencia um produto. O servidor calcula valores e verifica estoque, sem confiar no total enviado pelo navegador.
+Pedido: `{ id, userId, items, totalInCents, status, createdAt }`. O documento de pedido e seus itens ficam em coleções separadas (`pedidos` e `pedido_itens`). Cada item expõe `productId`, nome, imagem, preço unitário em centavos e quantidade, e mantém referência MongoDB ao produto. O servidor calcula valores e verifica/baixa estoque em transação, sem confiar no total enviado pelo navegador. MongoDB precisa estar em replica set para suportar transações (Atlas já oferece esse modo). `shippingAddressId` existe no model e é opcional até a tela de endereço ser integrada ao checkout.
 
-Erros propostos: `{ message, fieldErrors? }`. Usar 400 para entrada inválida, 401 para ausência/expiração da autenticação, 403 para acesso negado, 404 para recurso ausente e 409 para conflitos como e-mail duplicado.
+As coleções seguem o diagrama em português: `clientes`, `categorias`, `produtos`, `variacoes`, `enderecos`, `carrinho_itens`, `pedidos` e `pedido_itens`. Campos de API são convertidos para os nomes do frontend; o cliente não precisa conhecer os campos internos do MongoDB.
 
-Definir com a dupla o mecanismo de sessão antes da implementação; preferir cookie HttpOnly com configuração de CORS/credenciais adequada. Se usar token, documentar armazenamento, expiração e logout. Proteger operações com cookie contra CSRF. Nunca confiar em role informado pelo navegador para conceder privilégios.
+Erros: `{ message, fieldErrors? }`. 400 para entrada inválida, 401 para ausência/expiração da autenticação, 403 para acesso negado, 404 para recurso ausente e 409 para conflitos como e-mail duplicado ou estoque insuficiente.
+
+Nunca confiar em role informado pelo navegador para conceder privilégios. Cookie SameSite=Strict e CORS de origem única reduzem exposição a CSRF. Cadastro não aceita papel; criação do primeiro admin deve ser feita diretamente no banco por responsável autorizado.

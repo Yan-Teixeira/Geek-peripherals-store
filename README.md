@@ -4,7 +4,7 @@ Projeto acadêmico de Arquitetura Web: um e-commerce geek especializado em perif
 
 ## Status
 
-Repositório em preparação. A implementação começa pelo frontend. O código do Figma Make ainda precisa ser exportado/importado; frontend e backend **ainda não estão implementados nem executáveis**.
+Frontend React e API Express/MongoDB estão em implementação neste repositório. Consulte a seção de execução para iniciar os serviços locais.
 
 ## Design
 
@@ -39,23 +39,21 @@ docs/
 
 ## Execução local
 
-Ainda não há `package.json` ou aplicação executável. Os comandos abaixo são a **convenção planejada**, a validar depois da implementação:
-
 ```bash
 # Terminal 1 — após implementar o backend
 cd server
 npm install
-# Copie .env.example para .env e preencha os valores.
-npm start
+Copy-Item .env.example .env
+# Edite .env com MongoDB e segredo JWT; então:
+npm run dev
 
 # Terminal 2 — após implementar o frontend
 cd client
 npm install
-# Copie .env.example para .env.
-npm start
+npm run dev
 ```
 
-As variáveis previstas estão nos arquivos `.env.example` de cada pasta. Elas são uma proposta de integração e deverão corresponder ao código implementado. Nunca publique arquivos `.env` ou credenciais reais.
+As variáveis estão nos arquivos `.env.example`. O frontend usa demonstração local enquanto `VITE_DEMO_MODE=true`; defina `VITE_DEMO_MODE=false` para consumir a API real. Nunca publique arquivos `.env` ou credenciais reais.
 
 ## Entrega acadêmica
 
