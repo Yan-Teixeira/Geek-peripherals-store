@@ -1,6 +1,6 @@
-# Proposta de contrato de API
+# Contrato atual da API
 
-Este contrato é uma proposta para alinhar a dupla. Nenhuma rota está implementada ou validada ainda.
+Este contrato descreve a API implementada em `server/src`. A sessão usa cookie JWT HttpOnly com validade de 7 dias; chamadas do navegador devem incluir credenciais (o frontend já faz isso). Configure `CLIENT_ORIGIN` com a origem exata do frontend. A API ainda não oferece integração de pagamento nem persiste o endereço enviado pelo checkout.
 
 Base local proposta: `http://localhost:3000/api`. Dados em JSON. Valores monetários em centavos inteiros, quantidades inteiras positivas. IDs gerados pelo servidor.
 
@@ -23,21 +23,25 @@ Base local proposta: `http://localhost:3000/api`. Dados em JSON. Valores monetá
 | GET | /orders | Listar pedidos próprios; admin pode listar todos | Autenticado |
 | GET | /orders/:id | Detalhes de pedido | Dono ou admin |
 | GET | /dashboard | Totais de vendas | Admin |
+| PATCH | /orders/:id | Atualizar status do pedido | Admin |
+| DELETE | /orders/:id | Excluir pedido | Admin |
 
-Cadastro via /auth/register completa a operação de criação de usuários. Definir política de exclusão preservando histórico de pedidos e referências. Produtos desativados podem preservar o histórico sem aceitar novas compras.
+`GET /products` aceita `q` para busca textual e `category` para filtrar. Administrador autenticado também recebe produtos inativos. `GET /orders?all=true` lista todos somente para administrador; cliente recebe sempre os próprios.
+
+O cadastro cria sempre um usuário comum e autentica a sessão. Contas vinculadas a pedidos não podem ser excluídas. Produtos vinculados a pedidos, itens de carrinho ou variações são desativados em vez de removidos; produtos sem referências podem ser excluídos.
 
 Usuário: `{ id, name, email, role }`, com role `admin` ou `user`. Nunca retornar hash de senha.
 
-Produto: `{ id, name, description, category, priceInCents, stock, images }`.
+Produto exposto pela API inclui `{ id, name, description, category, priceInCents, oldPriceInCents?, stock, images, badge?, specs }`. Internamente, o produto referencia uma categoria por `categoryId`; ao cadastrar pelo painel, a API localiza ou cria a categoria pelo nome. O documento MongoDB armazena valores monetários em centavos inteiros. Produtos inativos não aparecem para visitantes.
 
-Pedido: `{ id, userId, items, totalInCents, status, createdAt }`. Cada item referencia um produto. O servidor calcula valores e verifica estoque, sem confiar no total enviado pelo navegador.
+Pedido: `{ id, userId, items, totalInCents, status, createdAt }`. O documento de pedido e seus itens ficam em coleções separadas (`pedidos` e `pedido_itens`). Cada item expõe `productId`, nome, imagem, preço unitário em centavos e quantidade, e mantém referência MongoDB ao produto. O servidor calcula valores e verifica/baixa estoque em transação, sem confiar no total enviado pelo navegador. MongoDB precisa estar em replica set para suportar transações (Atlas já oferece esse modo). `shippingAddressId` existe no model e é opcional. Atualmente, `POST /orders` consome somente `items`; campos de endereço e pagamento enviados pelo frontend ainda não são persistidos. O pedido fica com status `Aguardando Pagamento` e o estoque é baixado durante sua criação.
 
-Erros propostos: `{ message, fieldErrors? }`. Usar 400 para entrada inválida, 401 para ausência/expiração da autenticação, 403 para acesso negado, 404 para recurso ausente e 409 para conflitos como e-mail duplicado.
+As coleções seguem o diagrama em português: `clientes`, `categorias`, `produtos`, `variacoes`, `enderecos`, `carrinho_itens`, `pedidos` e `pedido_itens`. Campos de API são convertidos para os nomes do frontend; o cliente não precisa conhecer os campos internos do MongoDB.
 
-Definir com a dupla o mecanismo de sessão antes da implementação; preferir cookie HttpOnly com configuração de CORS/credenciais adequada. Se usar token, documentar armazenamento, expiração e logout. Proteger operações com cookie contra CSRF. Nunca confiar em role informado pelo navegador para conceder privilégios.
+Erros usam `{ message, fieldErrors? }`. A API retorna 400 para entrada inválida, 401 para ausência/expiração da autenticação, 403 para acesso negado, 404 para recurso ausente, 409 para conflitos e estoque insuficiente, e 500 para erros internos. Nunca confie em papel informado pelo navegador. O cookie usa `SameSite=Strict`; CORS aceita somente a origem configurada. O cadastro não aceita papel. Crie o primeiro administrador diretamente no banco, por responsável autorizado.
 
 ## Pagamentos e checkout
 
 O checkout do frontend inclui Pix, crédito, débito e boleto em **modo demonstrativo**. O QR temporário exibido nessa configuração contém um payload identificador da demonstração, não uma cobrança Pix. Na integração real, o backend deverá criar a cobrança com um provedor de pagamentos e devolver os dados seguros que a interface precisa exibir (por exemplo, QR e código Pix copia e cola, vencimento ou token de sessão do cartão). O backend deve validar o estado por webhook do provedor antes de marcar o pedido como pago.
 
-Nunca envie nem persista número completo do cartão, CVV ou validade no banco MongoDB, nos pedidos, logs ou endpoints próprios. Para cartão, use os campos/tokenização hospedados pelo provedor e envie ao backend somente o token seguro. O servidor calcula o total com os preços atuais do catálogo e confirma estoque; valores do cliente servem apenas para apresentação.
+Nunca envie nem persista número completo do cartão, CVV ou validade no MongoDB, nos pedidos, logs ou endpoints próprios. Para cartão, use a tokenização do provedor e envie ao backend somente o token seguro. O servidor deve calcular o total com os preços atuais do catálogo e confirmar estoque; valores do cliente servem apenas para apresentação.

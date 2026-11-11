@@ -4,7 +4,7 @@ Projeto acadêmico de Arquitetura Web: um e-commerce geek especializado em perif
 
 ## Status
 
-O frontend React está implementado com catálogo, vitrine, autenticação, carrinho, checkout demonstrativo e painel administrativo. A API Express/MongoDB será integrada pela camada de serviços quando o backend estiver disponível. Os pagamentos atuais são simulações: não cobram, não emitem Pix/boleto bancário e não enviam os dados de cartão.
+O repositório contém o frontend React e uma API Express/MongoDB com autenticação, produtos, pedidos e painel administrativo. O frontend tem modo local de demonstração e modo API. O checkout visual existe, mas a API ainda não persiste o endereço nem integra pagamentos; Pix, cartão e boleto permanecem simulados, sem cobrança ou envio de dados de cartão.
 
 ## Design
 
@@ -43,17 +43,18 @@ docs/
 # Terminal 1 — backend
 cd server
 npm install
-# Copie .env.example para .env e configure MongoDB e sessão.
-npm start
+Copy-Item .env.example .env
+# Configure MONGODB_URI e troque JWT_SECRET por um segredo aleatório com pelo menos 32 caracteres.
+npm run dev
 
 # Terminal 2 — frontend
 cd client
 npm install
-# Copie .env.example para .env. O VITE_API_URL aponta para a API.
+# Copie .env.example para .env; VITE_API_URL aponta para a API.
 npm run dev
 ```
 
-Com `VITE_DEMO_MODE=true`, o frontend usa dados locais de demonstração. Para apontá-lo ao backend, use `VITE_DEMO_MODE=false` e configure `VITE_API_URL` (por padrão `http://localhost:3000/api`). O contrato inicial está em [docs/contrato-api.md](docs/contrato-api.md). Valores monetários trafegam em centavos inteiros. Nunca publique arquivos `.env` ou credenciais reais.
+O frontend usa dados locais quando `VITE_DEMO_MODE=true`; defina `VITE_DEMO_MODE=false` para chamar a API (padrão `http://localhost:3000/api`). Consulte [docs/contrato-api.md](docs/contrato-api.md) para as rotas e os limites atuais da integração. Nunca publique arquivos `.env` ou credenciais reais.
 
 ## Entrega acadêmica
 
