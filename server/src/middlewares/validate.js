@@ -2,6 +2,7 @@ import { HttpError } from '../utils/httpError.js'
 export function objectBody(req, _res, next) { if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) return next(new HttpError(400, 'Envie um objeto JSON válido.')); next() }
 export function validateProduct(req, _res, next) {
   const b = req.body; const errors = {}
+  if (b.isWeeklyOffer !== undefined && typeof b.isWeeklyOffer !== 'boolean') errors.isWeeklyOffer = 'Informe verdadeiro ou falso para oferta da semana.'
   if (typeof b.name !== 'string' || b.name.trim().length < 2 || b.name.length > 120) errors.name = 'Informe um nome entre 2 e 120 caracteres.'
   if (typeof b.category !== 'string' || !b.category.trim() || b.category.length > 60) errors.category = 'Informe uma categoria válida.'
   if (typeof b.description !== 'string' || !b.description.trim() || b.description.length > 3000) errors.description = 'Informe uma descrição válida.'
