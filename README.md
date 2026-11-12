@@ -86,8 +86,8 @@ Preencher antes da entrega:
 
 | Integrante | Responsabilidade |
 | --- | --- |
-| Nome do integrante | Frontend |
-| Nome do integrante | Backend |
+| Yan Teixeira | Frontend |
+| Lucas Gabriel | Backend |
 
 ## Colaboração
 
