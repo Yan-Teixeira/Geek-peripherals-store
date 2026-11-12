@@ -1,4 +1,22 @@
-# Geek Peripherals Store
+![Página inicial da NEXUS//LAB com navegação, setup gamer e acesso ao catálogo](docs/images/nexus-lab-inicio.png)
+
+<h1 align="center">NEXUS//LAB · Geek Peripherals Store</h1>
+
+<p align="center"><strong>Seu setup. Seu domínio.</strong><br/>Loja virtual de periféricos e componentes para computadores.</p>
+
+<p align="center">React · TypeScript · Vite · Node.js · Express · MongoDB Atlas</p>
+
+<p align="center">
+  <a href="#status">Status</a> ·
+  <a href="#estrutura">Estrutura</a> ·
+  <a href="#execução-local">Como executar</a> ·
+  <a href="docs/requisitos.md">Requisitos</a> ·
+  <a href="docs/contrato-api.md">Contrato da API</a>
+</p>
+
+---
+
+## Sobre o projeto
 
 Projeto acadêmico de Arquitetura Web: um e-commerce geek especializado em periféricos de computadores, com loja virtual e painel administrativo.
 
