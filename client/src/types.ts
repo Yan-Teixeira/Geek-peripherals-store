@@ -12,11 +12,15 @@ export interface Product {
   stock: number
   images: string[]
   badge?: string
+  viewsCount?: number
+  isWeeklyOffer?: boolean
+  unitsSold?: number
   featured?: boolean
   bestseller?: boolean
   specs?: Record<string, string>
 }
-export type ProductInput = Omit<Product, 'id'>
+export interface HomeSections { featured: Product[]; weeklyOffers: Product[]; bestsellers: Product[]; distinctSoldProducts: number }
+export type ProductInput = Omit<Product, 'id' | 'viewsCount' | 'unitsSold'>
 export interface User { id: string; name: string; email: string; role: 'admin' | 'user' }
 export interface CartItem { productId: string; quantity: number }
 export interface DeliveryAddress { recipient: string; postalCode: string; street: string; number: string; complement: string; neighborhood: string; city: string; state: string }

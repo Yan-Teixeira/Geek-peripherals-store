@@ -22,6 +22,8 @@ async function findOrCreateCategory(name) {
 export function toApiProduct(product, variations = []) {
   return {
     id: product.id,
+    viewsCount: product.viewsCount || 0,
+    isWeeklyOffer: product.isWeeklyOffer === true,
     name: product.name,
     brand: product.brand || '',
     model: product.model || '',
@@ -71,6 +73,7 @@ export async function create(req, res) {
     model: typeof req.body.model === 'string' ? req.body.model.trim() : '',
     description: req.body.description.trim(), priceInCents: req.body.priceInCents,
     oldPriceInCents: req.body.oldPriceInCents ?? undefined, stock: req.body.stock,
+    isWeeklyOffer: req.body.isWeeklyOffer === true,
     images: req.body.images, badge: req.body.badge, specs: req.body.specs || {},
   })
   await product.populate('categoryId', 'name slug')
@@ -81,7 +84,7 @@ export async function update(req, res) {
   if (!product) throw new HttpError(404, 'Produto não encontrado.')
   const data = req.body
   if (data.category !== undefined) product.categoryId = (await findOrCreateCategory(data.category))._id
-  for (const key of ['name', 'description', 'priceInCents', 'oldPriceInCents', 'stock', 'images', 'badge', 'specs', 'active', 'brand', 'model']) {
+  for (const key of ['name', 'description', 'priceInCents', 'oldPriceInCents', 'stock', 'images', 'badge', 'specs', 'active', 'brand', 'model', 'isWeeklyOffer']) {
     if (data[key] !== undefined) product[key] = key === 'oldPriceInCents' && data[key] === null ? undefined : data[key]
   }
   await product.save()

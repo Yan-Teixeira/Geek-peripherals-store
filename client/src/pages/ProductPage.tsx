@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useCatalog } from '../contexts/CatalogContext'
 import { useCart } from '../contexts/CartContext'
@@ -6,6 +6,8 @@ import { Button } from '../components/Button'
 import { Icon } from '../components/Icon'
 import { ErrorNotice, Loading } from '../components/Feedback'
 import type { Product } from '../types'
+import { api } from '../services/api'
+import { useAuth } from '../contexts/AuthContext'
 import { money, errorMessage } from '../utils'
 export function ProductPage({ onAdded }: { onAdded: () => void }) {
   const { id } = useParams()
@@ -21,6 +23,15 @@ function ProductDetail({ product, onAdded }: { product: Product; onAdded: () => 
   const [quantity, setQuantity] = useState(1)
   const [error, setError] = useState('')
   const { add } = useCart()
+  const { user } = useAuth()
+  const recorded = useRef('')
+  useEffect(() => {
+    if (!user) return
+    const visit = `${user.id}:${product.id}`
+    if (recorded.current === visit) return
+    recorded.current = visit
+    void api.recordView(product.id).catch(() => { /* Uma falha de contagem não bloqueia a compra. */ })
+  }, [product.id, user?.id])
   return <main className="product-page container">
     <Link to="/" className="back-link"><Icon name="arrow"/> Voltar para a loja</Link>
     <div className="product-detail">

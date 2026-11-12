@@ -11,7 +11,11 @@ const productSchema = new mongoose.Schema({
   oldPriceInCents: { type: Number, min: 1, validate: Number.isSafeInteger },
   stock: { type: Number, required: true, min: 0, validate: Number.isSafeInteger },
   badge: { type: String, trim: true, maxlength: 40 },
+  viewsCount: { type: Number, default: 0, min: 0, validate: Number.isSafeInteger },
+  isWeeklyOffer: { type: Boolean, default: false },
   active: { type: Boolean, default: true },
 }, { collection: 'produtos', timestamps: true, toJSON: { flattenMaps: true, transform: (_doc, ret) => { ret.id = ret._id.toString(); delete ret._id; delete ret.__v; delete ret.createdAt; delete ret.updatedAt; delete ret.active; return ret } } })
 productSchema.index({ name: 'text', brand: 'text', model: 'text', description: 'text' })
+productSchema.index({ active: 1, viewsCount: -1, _id: 1 })
+productSchema.index({ active: 1, isWeeklyOffer: 1 })
 export default mongoose.model('Product', productSchema)

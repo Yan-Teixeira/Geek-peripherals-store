@@ -1,11 +1,14 @@
 import { request } from './http'
-import type { CartItem, CheckoutDetails, Dashboard, Order, Product, ProductInput, User, Variation } from '../types'
+import type { CartItem, CheckoutDetails, Dashboard, HomeSections, Order, Product, ProductInput, User, Variation } from '../types'
 
 // Não faz fallback silencioso: falhas de backend continuam visíveis no modo API.
 export const isDemo = import.meta.env.VITE_DEMO_MODE !== 'false'
 const demoModule = isDemo ? import('./demo').then(module => module.demo) : null
 const body = (value: unknown) => JSON.stringify(value)
 export const api = {
+  home: async (): Promise<HomeSections> => demoModule ? (await demoModule).home() : request('/home'),
+  recordView: async (id: string): Promise<{ viewsCount: number }> => demoModule ? (await demoModule).recordView(id) : request(`/products/${encodeURIComponent(id)}/views`, { method: 'POST' }),
+  weeklyOffer: async (id: string, isWeeklyOffer: boolean): Promise<Product> => demoModule ? (await demoModule).weeklyOffer(id, isWeeklyOffer) : request(`/products/${encodeURIComponent(id)}/weekly-offer`, { method: 'PATCH', body: body({ isWeeklyOffer }) }),
   variations: (id: string): Promise<Variation[]> => request(`/products/${encodeURIComponent(id)}/variations`),
   saveVariation: (productId: string, data: Omit<Variation, 'id' | 'productId'>, id?: string): Promise<Variation> => request(`/products/${encodeURIComponent(productId)}/variations${id ? '/' + encodeURIComponent(id) : ''}`, { method: id ? 'PATCH' : 'POST', body: body(data) }),
   deleteVariation: (productId: string, id: string): Promise<void> => request(`/products/${encodeURIComponent(productId)}/variations/${encodeURIComponent(id)}`, { method: 'DELETE' }),

@@ -14,3 +14,5 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 
 import './catalog.css'
 import './refinements.css'
+
+import './interactions.css'

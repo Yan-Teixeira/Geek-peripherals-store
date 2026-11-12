@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { MotionEffects } from './components/MotionEffects'
 import { Accessibility } from './components/Accessibility'
 import { Footer } from './components/Footer'
 import { Header } from './components/Header'
@@ -36,7 +37,7 @@ export default function App() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   useEffect(() => { window.scrollTo(0, 0); setError('') }, [pathname])
-  return <div className="app">
+  return <div className="app"><MotionEffects/>
     <a className="skip-link" href="#content">Pular para o conteúdo</a>
     <Header cartCount={items.reduce((sum, item) => sum + item.quantity, 0)} query={query} onSearch={setQuery} onCart={() => setCartOpen(true)}/>
     {isDemo && <div className="demo-banner">Demonstração acadêmica · dados fictícios e temporários · nenhuma compra real <Link to="/login">Acessar contas de teste</Link></div>}

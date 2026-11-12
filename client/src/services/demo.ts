@@ -19,6 +19,17 @@ function validateProduct(data: ProductInput) {
 }
 
 export const demo = {
+  async home() {
+    await delay()
+    const quantities = new Map<string, number>()
+    for (const order of orders.filter(order => ['Pago', 'Enviado', 'Entregue'].includes(order.status))) {
+      for (const item of order.items) quantities.set(item.productId, (quantities.get(item.productId) || 0) + item.quantity)
+    }
+    const sold = products.filter(p => quantities.has(p.id)).sort((a, b) => quantities.get(b.id)! - quantities.get(a.id)!)
+    return structuredClone({ featured: [...products].sort((a, b) => (b.viewsCount || 0) - (a.viewsCount || 0)).slice(0, 4), weeklyOffers: products.filter(p => p.isWeeklyOffer).slice(0, 4), distinctSoldProducts: sold.length, bestsellers: sold.length >= 2 ? sold.slice(0, 4) : [] })
+  },
+  async recordView(id: string) { requireUser(); const p = products.find(p => p.id === id); if (!p) throw new ApiError('Produto não encontrado.', 404); p.viewsCount = (p.viewsCount || 0) + 1; return { viewsCount: p.viewsCount } },
+  async weeklyOffer(id: string, isWeeklyOffer: boolean) { requireAdmin(); const p = products.find(p => p.id === id); if (!p) throw new ApiError('Produto não encontrado.', 404); p.isWeeklyOffer = isWeeklyOffer; return structuredClone(p) },
   async products() { await delay(); return structuredClone(products) },
   async me() { await delay(); return session },
   async login(email: string, password: string) {

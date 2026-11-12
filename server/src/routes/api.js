@@ -7,6 +7,7 @@ import * as products from '../controllers/productController.js'
 import * as variations from '../controllers/variationController.js'
 import * as orders from '../controllers/orderController.js'
 import * as users from '../controllers/userController.js'
+import { home, recordView, weeklyOffer } from '../controllers/homeController.js'
 import { getDashboard } from '../controllers/dashboardController.js'
 
 const router = Router()
@@ -15,6 +16,9 @@ router.post('/auth/login', objectBody, asyncHandler(auth.login))
 router.get('/auth/me', requireAuth, asyncHandler(auth.me))
 router.post('/auth/logout', requireAuth, auth.logout)
 
+router.get('/home', asyncHandler(home))
+router.post('/products/:id/views', requireAuth, asyncHandler(recordView))
+router.patch('/products/:id/weekly-offer', requireAuth, requireAdmin, objectBody, asyncHandler(weeklyOffer))
 router.get('/products', optionalAuth, asyncHandler(products.list))
 router.get('/products/:id', asyncHandler(products.get))
 router.post('/products', requireAuth, requireAdmin, objectBody, validateProduct, asyncHandler(products.create))

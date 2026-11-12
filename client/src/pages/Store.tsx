@@ -1,8 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { categories as productCategories, filterProducts } from '../catalog'
 import { images } from '../data/products'
-import type { Product } from '../types'
+import { api } from '../services/api'
+import { ErrorNotice, Loading } from '../components/Feedback'
+import { errorMessage } from '../utils'
+import type { HomeSections, Product } from '../types'
 import { Button } from '../components/Button'
 import { Icon } from '../components/Icon'
 import { ProductCard } from '../components/ProductCard'
@@ -27,10 +30,19 @@ export function Store({
   const categories = ['Todos', ...new Set([...productCategories, ...products.map(p => p.category)])]
   const invalidRange = min !== '' && max !== '' && Number(min) > Number(max)
   const visible = invalidRange ? [] : filterProducts(products, { query, category, min: min === '' ? undefined : Math.round(Number(min) * 100), max: max === '' ? undefined : Math.round(Number(max) * 100), inStock: availability === "available", sort }).filter(product => availability !== "sold-out" || product.stock === 0)
-  const showcase = filterProducts(products, { query: '', category: 'Todos', inStock: false, sort: 'featured' })
-  const featured = showcase.filter(product => product.featured).slice(0, 4)
-  const promotions = showcase.filter(product => product.oldPriceInCents && product.oldPriceInCents > product.priceInCents).slice(0, 4)
-  const bestsellers = showcase.filter(product => product.bestseller).slice(0, 4)
+  const [home, setHome] = useState<HomeSections | null>(null)
+  const [homeError, setHomeError] = useState('')
+  const [homeLoading, setHomeLoading] = useState(true)
+  const [retry, setRetry] = useState(0)
+  useEffect(() => {
+    if (catalogOnly) return
+    let active = true
+    setHomeLoading(true); setHomeError('')
+    api.home().then(data => { if (active) setHome(data) }).catch(error => { if (active) setHomeError(errorMessage(error)) }).finally(() => { if (active) setHomeLoading(false) })
+    return () => { active = false }
+  }, [catalogOnly, products, retry])
+  const sections: [string, Product[]][] = home ? [['Destaques para seu setup', home.featured], ['Ofertas da semana', home.weeklyOffers]] : []
+  if (home && home.distinctSoldProducts >= 2 && home.bestsellers.length >= 2) sections.push(['Os mais vendidos', home.bestsellers])
   function reset() { setCategory('Todos'); setMin(''); setMax(''); setAvailability('all'); setSort('featured'); onClearSearch() }
 
 
@@ -57,12 +69,12 @@ export function Store({
               onClick={() =>
                 document
                   .getElementById("products")
-                  ?.scrollIntoView({ behavior: "smooth" })
+                  ?.scrollIntoView({ behavior: "auto" })
               }
             >
               Explorar produtos <Icon name="arrow" />
             </Button>
-            <Button variant="secondary" onClick={() => { setCategory("PCs montados"); document.getElementById("products")?.scrollIntoView({behavior: "smooth"}) }}>
+            <Button variant="secondary" onClick={() => { setCategory("PCs montados"); document.getElementById("products")?.scrollIntoView({behavior: "auto"}) }}>
               Explorar PCs <Icon name="cpu" />
             </Button>
           </div>
@@ -100,10 +112,12 @@ export function Store({
       </section>
 
       </>}
-      {!catalogOnly ? <div className="store-showcase">
-        {([['Destaques para seu setup', featured], ['Ofertas da semana', promotions], ['Os mais vendidos', bestsellers]] as const).map(([title, list]) => <section className="catalog container showcase-section" key={title}>
+      {!catalogOnly ? <div className="store-showcase" id="products">
+        {homeLoading && <Loading/>}
+        {homeError && <ErrorNotice message={homeError} retry={() => setRetry(value => value + 1)}/>}
+        {!homeLoading && !homeError && sections.map(([title, list]) => <section className="catalog container showcase-section" key={title}>
           <div className="section-heading"><div><span className="eyebrow">Curadoria Nexus</span><h2>{title.toUpperCase()}</h2></div><Button variant="ghost" onClick={() => navigate('/catalogo')}>Ver catálogo completo <Icon name="arrow"/></Button></div>
-          <div className="product-grid">{list.map(product => <ProductCard key={product.id} product={product} onProduct={() => onProduct(product.id)} onAdd={() => onAdd(product.id)}/>)}</div>
+          <>{!list.length && <p className="notice">{title === 'Ofertas da semana' ? 'Novas ofertas em breve. Explore nosso catálogo.' : 'Nenhum produto disponível no momento.'}</p>}<div className="product-grid">{list.map(product => <ProductCard key={product.id} product={product} onProduct={() => onProduct(product.id)} onAdd={() => onAdd(product.id)}/>)}</div></>
         </section>)}
       </div> : <section className="catalog container" id="products">
         <div className="section-heading">
