@@ -33,7 +33,7 @@ export function CheckoutPage() {
   const cartKey = items.map(item => `${item.productId}:${item.quantity}`).sort().join('|')
   useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 1000); return () => window.clearInterval(timer) }, [])
   useEffect(() => {
-    if (!isDemo || step !== 1 || payment.method !== 'pix') return
+    if (step !== 1 || payment.method !== 'pix') return
     setPix(current => renewDemoPix(current, total, cartKey, Date.now(), () => globalThis.crypto.randomUUID()))
   }, [step, payment.method, total, cartKey, now])
 

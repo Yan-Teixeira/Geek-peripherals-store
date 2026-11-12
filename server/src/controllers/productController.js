@@ -3,6 +3,7 @@ import Category from '../models/Category.js'
 import OrderItem from '../models/OrderItem.js'
 import CartItem from '../models/CartItem.js'
 import Variation from '../models/Variation.js'
+import { serializeVariation } from './variationController.js'
 import { HttpError } from '../utils/httpError.js'
 
 function slugify(value) {
@@ -18,10 +19,15 @@ async function findOrCreateCategory(name) {
   }
   return category
 }
-function toApiProduct(product) {
+export function toApiProduct(product, variations = []) {
   return {
     id: product.id,
     name: product.name,
+    brand: product.brand || '',
+    model: product.model || '',
+    categoryId: product.categoryId?._id?.toString() || null,
+    active: product.active,
+    variations,
     category: product.categoryId?.name || '',
     description: product.description,
     priceInCents: product.priceInCents,
@@ -44,12 +50,18 @@ export async function list(req, res) {
   }
   if (req.query.q) filter.$text = { $search: String(req.query.q).slice(0, 100) }
   const products = await populateCategory(Product.find(filter).sort({ createdAt: -1 }))
-  res.json(products.map(toApiProduct))
+  const variations = await Variation.find({ productId: { $in: products.map(product => product._id) } }).sort({ type: 1, value: 1 })
+  const byProduct = new Map()
+  for (const variation of variations) {
+    const key = variation.productId.toString()
+    byProduct.set(key, [...(byProduct.get(key) || []), serializeVariation(variation)])
+  }
+  res.json(products.map(product => toApiProduct(product, byProduct.get(product.id) || [])))
 }
 export async function get(req, res) {
   const product = await populateCategory(Product.findOne({ _id: req.params.id, active: true }))
   if (!product) throw new HttpError(404, 'Produto não encontrado.')
-  res.json(toApiProduct(product))
+  res.json(toApiProduct(product, (await Variation.find({ productId: product._id })).map(serializeVariation)))
 }
 export async function create(req, res) {
   const category = await findOrCreateCategory(req.body.category)
@@ -58,7 +70,7 @@ export async function create(req, res) {
     brand: typeof req.body.brand === 'string' ? req.body.brand.trim() : '',
     model: typeof req.body.model === 'string' ? req.body.model.trim() : '',
     description: req.body.description.trim(), priceInCents: req.body.priceInCents,
-    oldPriceInCents: req.body.oldPriceInCents, stock: req.body.stock,
+    oldPriceInCents: req.body.oldPriceInCents ?? undefined, stock: req.body.stock,
     images: req.body.images, badge: req.body.badge, specs: req.body.specs || {},
   })
   await product.populate('categoryId', 'name slug')
@@ -70,11 +82,11 @@ export async function update(req, res) {
   const data = req.body
   if (data.category !== undefined) product.categoryId = (await findOrCreateCategory(data.category))._id
   for (const key of ['name', 'description', 'priceInCents', 'oldPriceInCents', 'stock', 'images', 'badge', 'specs', 'active', 'brand', 'model']) {
-    if (data[key] !== undefined) product[key] = data[key]
+    if (data[key] !== undefined) product[key] = key === 'oldPriceInCents' && data[key] === null ? undefined : data[key]
   }
   await product.save()
   await product.populate('categoryId', 'name slug')
-  res.json(toApiProduct(product))
+  res.json(toApiProduct(product, (await Variation.find({ productId: product._id })).map(serializeVariation)))
 }
 export async function remove(req, res) {
   const product = await Product.findById(req.params.id)

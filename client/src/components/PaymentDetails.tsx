@@ -24,13 +24,13 @@ export function PixDetails({ pix, now, isDemo }: { pix: DemoPix | null; now: num
   useEffect(() => {
     let active = true
     setCopied(false); setError('')
-    if (payload && isDemo) QRCode.toDataURL(payload, { width: 240, margin: 4, errorCorrectionLevel: 'M' }).then(url => { if (active) setImage({ payload, url }) }).catch(() => { if (active) setError('Não foi possível gerar o QR Code. Volte à etapa anterior e tente novamente.') })
+    if (payload) QRCode.toDataURL(payload, { width: 240, margin: 4, errorCorrectionLevel: 'M' }).then(url => { if (active) setImage({ payload, url }) }).catch(() => { if (active) setError('Não foi possível gerar o QR Code. Volte à etapa anterior e tente novamente.') })
     return () => { active = false }
   }, [payload, isDemo])
-  if (!isDemo) return <p className="notice">A emissão de uma cobrança Pix real depende da integração com o provedor de pagamento.</p>
+
   const seconds = pix ? Math.max(0, Math.ceil((pix.expiresAt - now) / 1000)) : 0
   return <section className="pix-panel" aria-label="Pix demonstrativo">
     <div className="pix-qr">{image?.payload === payload && seconds > 0 ? <img src={image.url} width="240" height="240" alt="QR Code de demonstração, não pagável"/> : <span role="status">Gerando QR Code...</span>}</div>
-    <div><h3>Pix</h3><p>QR demonstrativo, sem cobrança. Não é aceito por aplicativos bancários.</p><p className="pix-timer">Expira em <strong aria-label="Tempo restante">{String(Math.floor(seconds / 60)).padStart(2, '0')}:{String(seconds % 60).padStart(2, '0')}</strong></p><p>Um novo código é gerado automaticamente após 30 minutos. Alterar o carrinho também renova o código.</p><button type="button" className="button button--secondary" disabled={!pix || seconds === 0} onClick={async () => { try { await navigator.clipboard.writeText(payload); setCopied(true) } catch { setError('Não foi possível copiar o código neste navegador.') } }}>Copiar código de teste</button><p role="status">{copied ? 'Código demonstrativo copiado.' : ''}</p>{error && <p role="alert">{error}</p>}</div>
+    <div><h3>Pix demonstrativo</h3>{!isDemo && <p className="notice">Prévia de teste: a API ainda não emite cobranças Pix. Este código não confirma nem realiza pagamentos.</p>}<p>QR demonstrativo, sem cobrança. Não é aceito por aplicativos bancários.</p><p className="pix-timer">Expira em <strong aria-label="Tempo restante">{String(Math.floor(seconds / 60)).padStart(2, '0')}:{String(seconds % 60).padStart(2, '0')}</strong></p><p>Um novo código é gerado automaticamente após 30 minutos. Alterar o carrinho também renova o código.</p><button type="button" className="button button--secondary" disabled={!pix || seconds === 0} onClick={async () => { try { await navigator.clipboard.writeText(payload); setCopied(true) } catch { setError('Não foi possível copiar o código neste navegador.') } }}>Copiar código de teste</button><p role="status">{copied ? 'Código demonstrativo copiado.' : ''}</p>{error && <p role="alert">{error}</p>}</div>
   </section>
 }

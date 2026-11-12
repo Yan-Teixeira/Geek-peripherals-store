@@ -4,6 +4,7 @@ import { objectBody, validateProduct } from '../middlewares/validate.js'
 import { requireAuth, requireAdmin, optionalAuth } from '../middlewares/auth.js'
 import * as auth from '../controllers/authController.js'
 import * as products from '../controllers/productController.js'
+import * as variations from '../controllers/variationController.js'
 import * as orders from '../controllers/orderController.js'
 import * as users from '../controllers/userController.js'
 import { getDashboard } from '../controllers/dashboardController.js'
@@ -19,6 +20,11 @@ router.get('/products/:id', asyncHandler(products.get))
 router.post('/products', requireAuth, requireAdmin, objectBody, validateProduct, asyncHandler(products.create))
 router.patch('/products/:id', requireAuth, requireAdmin, objectBody, validateProduct, asyncHandler(products.update))
 router.delete('/products/:id', requireAuth, requireAdmin, asyncHandler(products.remove))
+
+router.get('/products/:id/variations', optionalAuth, asyncHandler(variations.list))
+router.post('/products/:id/variations', requireAuth, requireAdmin, objectBody, variations.validate, asyncHandler(variations.create))
+router.patch('/products/:id/variations/:variationId', requireAuth, requireAdmin, objectBody, variations.validate, asyncHandler(variations.update))
+router.delete('/products/:id/variations/:variationId', requireAuth, requireAdmin, asyncHandler(variations.remove))
 
 router.post('/orders', requireAuth, objectBody, asyncHandler(orders.create))
 router.get('/orders', requireAuth, asyncHandler(orders.list))

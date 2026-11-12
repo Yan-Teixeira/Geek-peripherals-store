@@ -24,13 +24,19 @@ function ProductDetail({ product, onAdded }: { product: Product; onAdded: () => 
   return <main className="product-page container">
     <Link to="/" className="back-link"><Icon name="arrow"/> Voltar para a loja</Link>
     <div className="product-detail">
+      <div className="product-gallery-column">
       <section className="gallery" aria-label="Galeria do produto">
         <div className="gallery__main"><img src={activeImage} alt={product.name}/>{product.badge && <span className="badge">{product.badge}</span>}</div>
         <div className="gallery__thumbs">{product.images.map((image, index) => <button key={`${image}-${index}`} className={activeImage === image ? 'active' : ''} aria-label={`Ver imagem ${index + 1}`} aria-pressed={activeImage === image} onClick={() => setActiveImage(image)}><img src={image} alt={`Vista ${index + 1} de ${product.name}`}/></button>)}</div>
       </section>
+      <div className="product-information">
+        {!!Object.keys(product.specs || {}).length && <div className="specs"><h3>ESPECIFICAÇÕES TÉCNICAS</h3><dl>{Object.entries(product.specs || {}).map(([name, value]) => <div key={name}><dt>{name}</dt><dd>{value}</dd></div>)}</dl></div>}
+        <section className="product-description" aria-labelledby="description-heading"><h2 id="description-heading">DESCRIÇÃO DO PRODUTO</h2><p className="product-copy">{product.description}</p></section>
+      </div>
+      </div>
       <section className="product-info">
         <span className="eyebrow">Nexus Gear · {product.category}</span><h1>{product.name.toUpperCase()}</h1>
-        <p className="product-copy">{product.description}</p>
+        {(product.brand || product.model) && <p>{[product.brand, product.model].filter(Boolean).join(" · ")}</p>}
         {product.id === '1' && <div className="feature-pills"><span><Icon name="keyboard"/> Layout ABNT2</span><span><Icon name="spark"/> RGB por tecla</span><span><Icon name="cpu"/> 1ms resposta</span></div>}
         <div className="buy-box">
           <div className="buy-box__price">{product.oldPriceInCents && <small>De {money(product.oldPriceInCents)} por</small>}<strong>{money(product.priceInCents)}</strong><span>ou 10x de {money(Math.round(product.priceInCents / 10))} sem juros</span></div>
@@ -39,7 +45,7 @@ function ProductDetail({ product, onAdded }: { product: Product; onAdded: () => 
             <Button disabled={product.stock === 0} className="buy-button" onClick={() => { try { add(product.id, quantity); setError(''); onAdded() } catch (error) { setError(errorMessage(error)) } }}><Icon name="cart"/> Adicionar ao carrinho</Button></div>
           {error && <ErrorNotice message={error}/>}
         </div>
-        {!!Object.keys(product.specs || {}).length && <div className="specs"><h3>ESPECIFICAÇÕES TÉCNICAS</h3><dl>{Object.entries(product.specs || {}).map(([name, value]) => <div key={name}><dt>{name}</dt><dd>{value}</dd></div>)}</dl></div>}
+        {!!product.variations?.length && <div className="specs"><h3>VARIAÇÕES CADASTRADAS</h3><p>A compra nesta página utiliza o preço e o estoque do produto principal. A seleção de variações no carrinho ainda não está disponível.</p><dl>{product.variations.map(variation => <div key={variation.id}><dt>{variation.type}: {variation.value}</dt><dd>{money(variation.priceInCents)} · {variation.stock > 0 ? `${variation.stock} unidades` : 'Esgotado'}</dd></div>)}</dl></div>}
       </section>
     </div>
   </main>

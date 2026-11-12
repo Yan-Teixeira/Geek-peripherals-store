@@ -7,7 +7,7 @@ export interface CatalogFilters { query: string; category: string; min?: number;
 export function filterProducts(products: Product[], filters: CatalogFilters) {
   const terms = normalizeSearch(filters.query).split(/\s+/).filter(Boolean).map(term => aliases[term] || term)
   const result = products.filter(product => {
-    const text = normalizeSearch(`${product.name} ${product.category} ${product.description} ${Object.values(product.specs || {}).join(' ')}`)
+    const text = normalizeSearch(`${product.name} ${product.brand || ""} ${product.model || ""} ${product.category} ${product.description} ${Object.values(product.specs || {}).join(' ')}`)
     return terms.every(term => text.includes(term)) &&
       (!filters.category || filters.category === 'Todos' || product.category === filters.category) &&
       (filters.min === undefined || product.priceInCents >= filters.min) &&

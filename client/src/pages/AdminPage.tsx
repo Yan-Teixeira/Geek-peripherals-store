@@ -3,6 +3,7 @@ import { categories, normalizeSearch } from '../catalog'
 import { useCatalog } from '../contexts/CatalogContext'
 import { api } from '../services/api'
 import type { Dashboard, Product, ProductInput } from '../types'
+import { VariationEditor } from '../components/VariationEditor'
 import { Button } from '../components/Button'
 import { Icon } from '../components/Icon'
 import { ErrorNotice, Loading } from '../components/Feedback'
@@ -33,6 +34,7 @@ export function AdminPage() {
     ].map(([label, value, icon]) => <article key={label}><span>{label}</span><strong>{value}</strong><small className={icon === 'cpu' ? 'warning' : 'up'}>{icon === 'cpu' ? 'Menos de 10 unidades' : 'Total registrado'}</small><i className="metric-icon"><Icon name={icon as 'spark' | 'box' | 'grid' | 'cpu'}/></i></article>)}</section>
     {editing && <ProductForm key={editing === 'new' ? 'new' : editing.id} product={editing === 'new' ? undefined : editing} onSave={save} onCancel={() => setEditing(null)}/>}
     {deleting && <section className="notice" role="alert"><p>Excluir <strong>{deleting.name}</strong> do catálogo?</p><div className="inline-actions"><Button disabled={busy} onClick={async () => { setBusy(true); setError(''); try { await api.deleteProduct(deleting.id); setDeleting(null); await refresh() } catch (error) { setError(errorMessage(error)) } finally { setBusy(false) } }}>{busy ? 'Excluindo...' : 'Confirmar exclusão'}</Button><Button variant="secondary" disabled={busy} onClick={() => setDeleting(null)}>Cancelar</Button></div></section>}
+    {editing && editing !== 'new' && <VariationEditor product={editing} onSaved={refresh}/>}
     <section className="inventory"><div className="inventory__heading"><div><h2>ESTOQUE ATUAL</h2><p>{products.length} produtos cadastrados</p></div><label className="table-search"><Icon name="search" size={17}/><input aria-label="Buscar no estoque" placeholder="Buscar no estoque..." value={query} onChange={event => setQuery(event.target.value)}/></label></div>
       {catalogError ? <ErrorNotice message={catalogError} retry={() => void refresh()}/> : loading ? <Loading/> : <><div className="table-wrap"><table><thead><tr><th>Produto</th><th>Categoria</th><th>Preço</th><th>Quantidade</th><th>Status</th><th>Ações</th></tr></thead><tbody>{visible.map(product => <tr key={product.id}><td><div className="table-product"><img src={product.images[0]} alt=""/><span><strong>{product.name}</strong><small>{product.id}</small></span></div></td><td>{product.category}</td><td><strong>{money(product.priceInCents)}</strong></td><td><b className={product.stock < 10 ? 'low' : ''}>{product.stock}</b></td><td><span className={`status ${product.stock === 0 ? 'off' : product.stock < 10 ? 'warn' : 'ok'}`}><i/>{product.stock === 0 ? 'Esgotado' : product.stock < 10 ? 'Estoque baixo' : 'Em estoque'}</span></td><td><div className="inline-actions"><button className="row-action" aria-label={`Editar ${product.name}`} onClick={() => { setEditing(product); setDeleting(null) }}>Editar</button><button className="row-action" aria-label={`Excluir ${product.name}`} onClick={() => { setDeleting(product); setEditing(null) }}><Icon name="trash" size={16}/></button></div></td></tr>)}</tbody></table></div>{!visible.length && <p className="notice">Nenhum produto encontrado.</p>}<div className="table-footer"><span>Mostrando {visible.length} de {products.length} produtos</span></div></>}
     </section>
@@ -51,14 +53,28 @@ function ProductForm({ product, onSave, onCancel }: { product?: Product; onSave:
       const priceInCents = Math.round(Number(data.get('price')) * 100)
       const stock = Number(data.get('stock'))
       if (!Number.isSafeInteger(priceInCents) || priceInCents <= 0 || !Number.isSafeInteger(stock) || stock < 0) throw new Error('Preço ou estoque inválido.')
-      await onSave({ name: String(data.get('name')).trim(), category: String(data.get('category')).trim(), description: String(data.get('description')).trim(), priceInCents, stock, images, badge: String(data.get('badge')).trim(), specs: product?.specs, oldPriceInCents: product?.oldPriceInCents }, product?.id)
+      const specs = Object.fromEntries(String(data.get('specs') || '').split('\n').filter(line => line.trim()).map(line => {
+        const separator = line.indexOf(':')
+        if (separator < 1 || !line.slice(separator + 1).trim()) throw new Error('Use uma especificação por linha no formato Nome: valor.')
+        return [line.slice(0, separator).trim(), line.slice(separator + 1).trim()]
+      }))
+      const oldPrice = String(data.get('oldPrice') || '').trim()
+      const oldPriceInCents = oldPrice ? Math.round(Number(oldPrice) * 100) : product?.oldPriceInCents
+      if (oldPriceInCents !== undefined && (!Number.isSafeInteger(oldPriceInCents) || oldPriceInCents < priceInCents)) throw new Error('O preço anterior deve ser igual ou maior que o preço atual.')
+      const brand = String(data.get('brand') || '').trim()
+      const model = String(data.get('model') || '').trim()
+      await onSave({ ...(brand || product?.brand !== undefined ? { brand } : {}), ...(model || product?.model !== undefined ? { model } : {}), name: String(data.get('name')).trim(), category: String(data.get('category')).trim(), description: String(data.get('description')).trim(), priceInCents, stock, images, badge: String(data.get('badge')).trim(), specs, oldPriceInCents }, product?.id)
     } catch (error) { setError(errorMessage(error)) } finally { setBusy(false) }
   }
   return <section className="form-panel product-form" aria-label={product ? 'Editar produto' : 'Novo produto'}><h2>{product ? 'EDITAR PRODUTO' : 'NOVO PRODUTO'}</h2>{error && <ErrorNotice message={error}/>}<form className="fields" onSubmit={submit}>
-    <label>Nome<input name="name" required maxLength={150} defaultValue={product?.name}/></label>
+    <label>Nome<input name="name" required maxLength={120} defaultValue={product?.name}/></label>
+    <div className="form-columns"><label>Marca<input name="brand" maxLength={100} defaultValue={product?.brand}/></label><label>Modelo<input name="model" maxLength={120} defaultValue={product?.model}/></label></div>
+
     <label>Categoria<select name="category" defaultValue={product?.category || 'Teclados'}>{categories.map(category => <option key={category}>{category}</option>)}</select></label>
     <label>Descrição<textarea name="description" required maxLength={2000} defaultValue={product?.description}/></label>
     <div className="form-columns"><label>Preço (R$)<input name="price" type="number" min="0.01" step="0.01" max="1000000" required defaultValue={product ? product.priceInCents / 100 : ''}/></label><label>Estoque<input name="stock" type="number" min="0" step="1" max="999999" required defaultValue={product?.stock ?? 0}/></label></div>
+    <label>Preço anterior (R$)<input name="oldPrice" type="number" min="0.01" step="0.01" defaultValue={product?.oldPriceInCents ? product.oldPriceInCents / 100 : ''}/><small>Opcional. Para manter um preço anterior já cadastrado, deixe o campo vazio.</small></label>
+    <label>Especificações técnicas<textarea name="specs" rows={6} placeholder={'Conexão: USB\nCor: Preto'} defaultValue={Object.entries(product?.specs || {}).map(([key, value]) => `${key}: ${value}`).join('\n')}/><small>Uma especificação por linha, no formato Nome: valor.</small></label>
     <label>Selo do produto<input name="badge" maxLength={40} defaultValue={product?.badge}/></label>
     <label>Imagens (uma URL por linha)<textarea name="images" required defaultValue={product?.images.join('\n')}/></label>
     <div className="inline-actions"><Button type="submit" disabled={busy}>{busy ? 'Salvando...' : 'Salvar produto'}</Button><Button variant="secondary" disabled={busy} onClick={onCancel}>Cancelar</Button></div>

@@ -1,11 +1,14 @@
 import { request } from './http'
-import type { CartItem, CheckoutDetails, Dashboard, Order, Product, ProductInput, User } from '../types'
+import type { CartItem, CheckoutDetails, Dashboard, Order, Product, ProductInput, User, Variation } from '../types'
 
 // Não faz fallback silencioso: falhas de backend continuam visíveis no modo API.
 export const isDemo = import.meta.env.VITE_DEMO_MODE !== 'false'
 const demoModule = isDemo ? import('./demo').then(module => module.demo) : null
 const body = (value: unknown) => JSON.stringify(value)
 export const api = {
+  variations: (id: string): Promise<Variation[]> => request(`/products/${encodeURIComponent(id)}/variations`),
+  saveVariation: (productId: string, data: Omit<Variation, 'id' | 'productId'>, id?: string): Promise<Variation> => request(`/products/${encodeURIComponent(productId)}/variations${id ? '/' + encodeURIComponent(id) : ''}`, { method: id ? 'PATCH' : 'POST', body: body(data) }),
+  deleteVariation: (productId: string, id: string): Promise<void> => request(`/products/${encodeURIComponent(productId)}/variations/${encodeURIComponent(id)}`, { method: 'DELETE' }),
   products: async (): Promise<Product[]> => demoModule ? (await demoModule).products() : request('/products'),
   me: async (): Promise<User | null> => demoModule ? (await demoModule).me() : request('/auth/me'),
   login: async (email: string, password: string): Promise<User> => demoModule ? (await demoModule).login(email, password) : request('/auth/login', { method: 'POST', body: body({ email, password }) }),

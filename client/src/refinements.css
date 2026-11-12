@@ -1,5 +1,22 @@
 /* Espaçamento e cantos suaves, preservando a identidade original. */
 :root { --radius-card: 12px; --radius-control: 12px; }
+/* Legibilidade padrão e conteúdo técnico abaixo da galeria. */
+body { font-size: 16px; }
+.app :is(p, label, input, select, textarea, td, .main-nav a, .catalog-sidebar label, .catalog-controls label, .catalog-results, .product-copy, .stock, .quantity span) { font-size: 16px; line-height: 1.6; }
+.app :is(small, th, .eyebrow, .badge, .back-link, .button, .cart-button, .demo-banner, .feature-pills span, .buy-box__price span, .table-footer, .cart-item span, .cart-item strong, .drawer__checkout > div span) { font-size: 14px; line-height: 1.5; }
+.app .product-gallery-column { min-width: 0; }
+.app .product-detail { align-items: start; }
+.app .product-information { margin-top: 32px; }
+.app .product-information .specs { margin-top: 0; }
+.app .specs dl div { font-size: 16px; line-height: 1.6; gap: 20px; grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+.app .specs :is(dt, dd) { overflow-wrap: anywhere; }
+.app .specs h3, .app .product-description h2 { font: 700 20px/1.4 var(--font-display); letter-spacing: .4px; }
+.app .product-description { margin-top: 32px; }
+.app .product-description .product-copy { white-space: pre-line; overflow-wrap: anywhere; margin: 16px 0 0; line-height: 1.8; }
+.app .catalog-toolbar { justify-content: flex-end; border: 0; background: transparent; padding: 0; }
+.app .header { height: auto; min-height: 76px; flex-wrap: wrap; padding-block: 12px; }
+.app .buy-actions { flex-wrap: wrap; }
+.app .buy-button { flex: 1 1 210px; white-space: normal; padding-block: 12px; }
 :is(.form-panel, .notice, .product-card, .benefits, .buy-box, .metrics article, .inventory, .catalog-controls, .gallery__main) { border-radius: var(--radius-card); }
 :is(.button, .icon-button, .cart-button, .search, .table-search, .filters button, .add-button, .image-arrow, .quantity, .gallery__thumbs button, .fields input, .fields select, .fields textarea, .catalog-controls input, .catalog-controls select) { border-radius: var(--radius-control); }
 .product-card { overflow: hidden; }

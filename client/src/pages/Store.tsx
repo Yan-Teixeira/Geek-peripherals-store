@@ -21,16 +21,17 @@ export function Store({
   const navigate = useNavigate()
   const [min, setMin] = useState('')
   const [max, setMax] = useState('')
-  const [inStock, setInStock] = useState(false)
+  const [availability, setAvailability] = useState('all')
+  const [priceOpen, setPriceOpen] = useState(true)
   const [sort, setSort] = useState('featured')
   const categories = ['Todos', ...new Set([...productCategories, ...products.map(p => p.category)])]
   const invalidRange = min !== '' && max !== '' && Number(min) > Number(max)
-  const visible = invalidRange ? [] : filterProducts(products, { query, category, min: min === '' ? undefined : Math.round(Number(min) * 100), max: max === '' ? undefined : Math.round(Number(max) * 100), inStock, sort })
+  const visible = invalidRange ? [] : filterProducts(products, { query, category, min: min === '' ? undefined : Math.round(Number(min) * 100), max: max === '' ? undefined : Math.round(Number(max) * 100), inStock: availability === "available", sort }).filter(product => availability !== "sold-out" || product.stock === 0)
   const showcase = filterProducts(products, { query: '', category: 'Todos', inStock: false, sort: 'featured' })
   const featured = showcase.filter(product => product.featured).slice(0, 4)
   const promotions = showcase.filter(product => product.oldPriceInCents && product.oldPriceInCents > product.priceInCents).slice(0, 4)
   const bestsellers = showcase.filter(product => product.bestseller).slice(0, 4)
-  function reset() { setCategory('Todos'); setMin(''); setMax(''); setInStock(false); setSort('featured'); onClearSearch() }
+  function reset() { setCategory('Todos'); setMin(''); setMax(''); setAvailability('all'); setSort('featured'); onClearSearch() }
 
 
   return (
@@ -110,29 +111,11 @@ export function Store({
             <span className="eyebrow">Curadoria Nexus</span>
             {catalogOnly ? <h1>CATÁLOGO COMPLETO</h1> : <h2>ENCONTRE SEU PRÓXIMO UPGRADE</h2>}
           </div>
-          <Button variant="ghost" onClick={() => { reset(); navigate("/catalogo") }}>
-            Ver catálogo completo <Icon name="arrow" />
-          </Button>
+
         </div>
-        <div className="filters">
-          {categories.map((item) => (
-            <button
-              key={item}
-              className={category === item ? "active" : ""}
-              aria-pressed={category === item}
-              onClick={() => setCategory(item)}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-        <div className="catalog-controls" role="group" aria-label="Filtros de produtos">
-          <label>Preço mínimo (R$)<input type="number" min="0" step="0.01" value={min} onChange={event => setMin(event.target.value)} /></label>
-          <label>Preço máximo (R$)<input type="number" min="0" step="0.01" value={max} onChange={event => setMax(event.target.value)} /></label>
-          <label>Ordenar por<select value={sort} onChange={event => setSort(event.target.value)}><option value="featured">Destaques</option><option value="price-asc">Menor preço</option><option value="price-desc">Maior preço</option><option value="name">Nome A–Z</option></select></label>
-          <label className="stock-filter"><input type="checkbox" checked={inStock} onChange={event => setInStock(event.target.checked)} />Só em estoque</label>
-          <Button variant="secondary" onClick={reset}>Limpar filtros</Button>
-        </div>
+        <div className="catalog-toolbar"><select aria-label="Ordenar produtos" value={sort} onChange={e => setSort(e.target.value)}><option value="featured">Mais relevantes</option><option value="price-asc">Menor preço</option><option value="price-desc">Maior preço</option><option value="name">Nome A–Z</option></select></div>
+        <section className="price-filter"><button type="button" className="price-toggle" aria-expanded={priceOpen} aria-controls="price-fields" onClick={() => setPriceOpen(open => !open)}>Faixa de preço <span className={priceOpen ? 'is-open' : ''}><Icon name="chevron"/></span></button><div id="price-fields" className={`price-collapse ${priceOpen ? 'is-open' : ''}`} inert={!priceOpen}><div><div className="catalog-controls"><label>Preço mínimo (R$)<input type="number" min="0" step="0.01" value={min} onChange={e => setMin(e.target.value)}/></label><label>Preço máximo (R$)<input type="number" min="0" step="0.01" value={max} onChange={e => setMax(e.target.value)}/></label></div></div></div></section>
+        <div className="catalog-layout"><aside className="catalog-sidebar" aria-label="Filtros do catálogo"><fieldset><legend>Categorias</legend>{categories.map(item => <label key={item}><input type="radio" name="category" checked={category === item} onChange={() => setCategory(item)}/>{item}</label>)}</fieldset><fieldset><legend>Disponibilidade</legend>{[['all', 'Todos'], ['available', 'Disponível'], ['sold-out', 'Esgotado']].map(([value, label]) => <label key={value}><input type="radio" name="availability" checked={availability === value} onChange={() => setAvailability(value)}/>{label}</label>)}</fieldset><button type="button" className="clear-filters" onClick={reset}>Limpar filtros</button></aside><div className="catalog-products">
         {invalidRange && <p className="notice error" role="alert">O preço mínimo não pode ser maior que o máximo.</p>}
         <p className="catalog-results" role="status">{visible.length} produtos encontrados{query && ` para “${query}”`}</p>
         {visible.length === 0 && <p role="status" className="notice">Nenhum produto encontrado. Tente outra busca ou categoria.</p>}
@@ -146,6 +129,7 @@ export function Store({
             />
           ))}
         </div>
+        </div></div>
       </section>}
     </main>
   )

@@ -1,6 +1,10 @@
+export interface Variation { id: string; productId: string; type: "Cor" | "Tamanho" | "Capacidade"; value: string; priceInCents: number; stock: number }
 export interface Product {
   id: string
   name: string
+  variations?: Variation[]
+  brand?: string
+  model?: string
   category: string
   description: string
   priceInCents: number
